@@ -1,0 +1,48 @@
+# PowerShell
+*.ps1~
+*.psm1~
+
+# Build output
+bin/
+obj/
+out/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+~$*
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# Windows
+Thumbs.db
+ebs.txt
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Mac
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Configuration files (if they contain sensitive data)
+# Uncomment if needed:
+# config.json
+# settings.json

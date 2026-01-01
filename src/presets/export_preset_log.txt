@@ -1,0 +1,11 @@
+[22:42:16] Compile-time hardening features are enabled
+[22:42:16] nvenc: version 13.0 is available
+[22:42:16] nvdec: is available
+[22:42:16] CUDA Version: 5.0
+[22:42:16] vcn: not available on this system
+[22:42:17] qsv: is available on this system
+[22:42:17] hb_init: starting libhb thread
+[22:42:17] thread 2 started ("libhb")
+Missing input device. Run C:\Program Files\HandBrake\HandBrakeCLI.exe --help for syntax.
+
+HandBrake has exited.

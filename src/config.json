@@ -1,0 +1,7 @@
+{
+  "MakeMKVPath": "C:\\Program Files (x86)\\MakeMKV\\makemkvcon.exe",
+  "HandBrakePath": "C:\\Program Files\\HandBrake\\HandBrakeCLI.exe",
+  "PresetFile": "C:\\Users\\rjest\\\\AppData\\\\Roaming\\\\HandBrake\\\\presets.json",
+  "DefaultOutputPath": "C:\\SourceCode\\AutomateHandbrake\\\\output",
+  "DefaultTempPath": "C:\\Users\\rjest\\AppData\\Local\\Temp\\\\dvd_rip_temp"
+}

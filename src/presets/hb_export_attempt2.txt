@@ -1,0 +1,12 @@
+[22:44:10] Compile-time hardening features are enabled
+[22:44:10] nvenc: version 13.0 is available
+[22:44:10] nvdec: is available
+[22:44:10] CUDA Version: 5.0
+[22:44:10] vcn: not available on this system
+[22:44:11] qsv: is available on this system
+[22:44:11] hb_init: starting libhb thread
+[22:44:11] thread 2 started ("libhb")
+HandBrake 1.10.2 (2025090600) - MinGW x86_64 - https://handbrake.fr
+4 CPUs detected
+
+HandBrake has exited.
