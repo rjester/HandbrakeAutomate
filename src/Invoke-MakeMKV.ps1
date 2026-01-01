@@ -90,12 +90,18 @@ function Invoke-MakeMKV-RipTitles {
     if (-not $OutDir) { throw 'OutDir is required' }
     New-Item -ItemType Directory -Path $OutDir -Force | Out-Null
 
+    Write-Host "Starting MakeMKV rip process..." -ForegroundColor Cyan
+    Write-Host "  Drive: $DriveIndex" -ForegroundColor Gray
+    Write-Host "  Selection: $Selection" -ForegroundColor Gray
+    Write-Host "  Output: $OutDir" -ForegroundColor Gray
+
     $logFile = [IO.Path]::Combine($OutDir, "makemkv_rip_$(Get-Random).log")
     $args = @('-r','mkv',"disc:$DriveIndex", $Selection, """$OutDir""")
 
     $proc = Start-Process -FilePath $MakeMKVPath -ArgumentList $args -NoNewWindow -PassThru -RedirectStandardOutput $logFile -RedirectStandardError $logFile
 
     $lastPercent = -1
+    $lastMilestone = -1
     while (-not $proc.HasExited) {
         Start-Sleep -Milliseconds $PollMs
         try {
@@ -105,11 +111,27 @@ function Invoke-MakeMKV-RipTitles {
                     $current = [int]$Matches[1]
                     $max = [int]$Matches[3]
                     if ($max -gt 0) { $pct = [math]::Round(($current / $max) * 100,1) } else { $pct = 0 }
-                    if ($pct -ne $lastPercent) { $lastPercent = $pct; Write-Progress -Activity 'MakeMKV Rip' -Status "$pct%" -PercentComplete $pct }
+                    if ($pct -ne $lastPercent) { 
+                        $lastPercent = $pct
+                        Write-Progress -Activity 'MakeMKV Rip' -Status "$pct% complete" -PercentComplete $pct
+                        # Report milestones
+                        if ($pct -ge 25 -and $lastMilestone -lt 25) {
+                            Write-Host "  → Progress: 25%" -ForegroundColor Gray
+                            $lastMilestone = 25
+                        } elseif ($pct -ge 50 -and $lastMilestone -lt 50) {
+                            Write-Host "  → Progress: 50%" -ForegroundColor Gray
+                            $lastMilestone = 50
+                        } elseif ($pct -ge 75 -and $lastMilestone -lt 75) {
+                            Write-Host "  → Progress: 75%" -ForegroundColor Gray
+                            $lastMilestone = 75
+                        }
+                    }
                 }
             }
         } catch { }
     }
+
+    Write-Progress -Activity 'MakeMKV Rip' -Completed
 
     $exit = $proc.ExitCode
     # ensure final log capture
@@ -117,6 +139,13 @@ function Invoke-MakeMKV-RipTitles {
     $all = Get-Content $logFile -ErrorAction SilentlyContinue | Out-String
 
     $mkvFiles = Get-ChildItem -Path $OutDir -Filter '*.mkv' -File -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
+
+    if ($exit -eq 0) {
+        Write-Host "✓ MakeMKV rip completed successfully" -ForegroundColor Green
+        Write-Host "  Files created: $($mkvFiles.Count)" -ForegroundColor Gray
+    } else {
+        Write-Host "✗ MakeMKV rip failed with exit code $exit" -ForegroundColor Red
+    }
 
     return [PSCustomObject]@{ Success = ($exit -eq 0); ExitCode = $exit; Log = $logFile; Files = $mkvFiles; RawOutput = $all }
 }
