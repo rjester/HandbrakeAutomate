@@ -71,17 +71,47 @@ function Invoke-HandBrake-Encode {
     if ($Container -eq 'mp4') { $args += "-f"; $args += "av_mp4" } else { $args += "-f"; $args += "av_mkv" }
     $args += "--json"
 
-    # Run HandBrakeCLI and capture all output into the log file
-    try {
-        $procOutput = & $HandBrakePath @args 2>&1 | Tee-Object -FilePath $logFile
-        $exit = $LASTEXITCODE
-    } catch {
-        $procOutput = $_ | Out-String
-        $exit = 1
-        Add-Content -Path $logFile -Value $procOutput -Encoding utf8
+    # Run HandBrakeCLI with progress monitoring
+    $proc = Start-Process -FilePath $HandBrakePath -ArgumentList $args -NoNewWindow -PassThru -RedirectStandardOutput $logFile -RedirectStandardError $logFile
+
+    $lastPercent = -1
+    $lastMilestone = -1
+    while (-not $proc.HasExited) {
+        Start-Sleep -Milliseconds $PollMs
+        try {
+            $tail = Get-Content $logFile -Tail 50 -ErrorAction SilentlyContinue
+            foreach ($line in $tail) {
+                # HandBrake JSON progress format: {"State":"WORKING","Working":{"Progress":0.5,"...}}
+                if ($line -match '"Progress"\s*:\s*(\d+(?:\.\d+)?)') {
+                    $progress = [double]$Matches[1]
+                    $pct = [math]::Round($progress * 100, 1)
+                    if ($pct -ne $lastPercent) {
+                        $lastPercent = $pct
+                        Write-Progress -Activity 'HandBrake Encode' -Status "$pct% complete" -PercentComplete $pct
+                        # Report milestones
+                        if ($pct -ge 25 -and $lastMilestone -lt 25) {
+                            Write-Host "  → Progress: 25%" -ForegroundColor Gray
+                            $lastMilestone = 25
+                        } elseif ($pct -ge 50 -and $lastMilestone -lt 50) {
+                            Write-Host "  → Progress: 50%" -ForegroundColor Gray
+                            $lastMilestone = 50
+                        } elseif ($pct -ge 75 -and $lastMilestone -lt 75) {
+                            Write-Host "  → Progress: 75%" -ForegroundColor Gray
+                            $lastMilestone = 75
+                        }
+                    }
+                }
+            }
+        } catch {
+            # Suppress errors during polling (file may be locked or not yet created)
+        }
     }
 
-    # Ensure we always write output to log and return the result
+    Write-Progress -Activity 'HandBrake Encode' -Completed
+
+    $exit = $proc.ExitCode
+    # Ensure final log capture
+    Start-Sleep -Milliseconds 200
     $all = Get-Content $logFile -ErrorAction SilentlyContinue | Out-String
 
     # Optionally show last lines on failure for quick debugging
