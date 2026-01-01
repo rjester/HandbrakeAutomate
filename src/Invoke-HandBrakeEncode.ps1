@@ -90,13 +90,13 @@ function Invoke-HandBrake-Encode {
                         Write-Progress -Activity 'HandBrake Encode' -Status "$pct% complete" -PercentComplete $pct
                         # Report milestones
                         if ($pct -ge 25 -and $lastMilestone -lt 25) {
-                            Write-Host "  → Encoding progress: 25%" -ForegroundColor Gray
+                            Write-Host "  → Progress: 25%" -ForegroundColor Gray
                             $lastMilestone = 25
                         } elseif ($pct -ge 50 -and $lastMilestone -lt 50) {
-                            Write-Host "  → Encoding progress: 50%" -ForegroundColor Gray
+                            Write-Host "  → Progress: 50%" -ForegroundColor Gray
                             $lastMilestone = 50
                         } elseif ($pct -ge 75 -and $lastMilestone -lt 75) {
-                            Write-Host "  → Encoding progress: 75%" -ForegroundColor Gray
+                            Write-Host "  → Progress: 75%" -ForegroundColor Gray
                             $lastMilestone = 75
                         }
                     }
