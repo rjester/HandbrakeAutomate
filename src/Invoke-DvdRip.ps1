@@ -383,7 +383,7 @@ try {
         $encodedCount++
         $outFile = Join-Path $OutputPath ("$($file.BaseName).$OutputFormat")
         Write-Host ""
-        Write-Host "  Encoding file $encodedCount of $($mkvFiles.Count): $($file.Name)" -ForegroundColor Yellow
+        Write-Host "Encoding file $encodedCount of $($mkvFiles.Count): $($file.Name)" -ForegroundColor Yellow
         Write-Log "Encoding $($file.Name) -> $outFile" -Level INFO
         $enc = Start-HandBrake-Encode -HandBrakePath $handbrake -InputFile $file.FullName -OutputFile $outFile -PresetFile $PresetFile -PresetName $PresetName -Format $OutputFormat
         if (-not $enc.Success) {
