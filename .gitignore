@@ -46,3 +46,6 @@ $RECYCLE.BIN/
 # Uncomment if needed:
 # config.json
 # settings.json
+
+# Ignore output artifacts
+output/
