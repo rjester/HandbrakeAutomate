@@ -95,7 +95,7 @@ Write-Host "  → Output directory: ./output" -ForegroundColor Gray
 Write-Host "  → Format: mp4" -ForegroundColor Gray
 Write-Host "  → Processing 1 file(s)..." -ForegroundColor Gray
 Write-Host ""
-Write-Host "  Encoding file 1 of 1: title00.mkv" -ForegroundColor Yellow
+Write-Host "Encoding file 1 of 1: title00.mkv" -ForegroundColor Yellow
 Write-Log "Encoding title00.mkv -> output/title00.mp4" -Level INFO
 Start-Sleep -Milliseconds 500
 Write-Host "  → Starting HandBrake encode process..." -ForegroundColor Gray
