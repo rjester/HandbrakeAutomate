@@ -72,6 +72,8 @@ function Invoke-HandBrake-Encode {
     $args += "--json"
 
     # Run HandBrakeCLI with progress monitoring
+    $cmd = "$HandBrakePath $($args -join ' ')"
+    Write-Host "  Command: $cmd" -ForegroundColor Gray
     $proc = Start-Process -FilePath $HandBrakePath -ArgumentList $args -NoNewWindow -PassThru -RedirectStandardOutput $logFile -RedirectStandardError $logFile
 
     $lastPercent = -1

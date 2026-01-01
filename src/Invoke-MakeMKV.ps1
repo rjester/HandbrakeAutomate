@@ -98,6 +98,9 @@ function Invoke-MakeMKV-RipTitles {
     $logFile = [IO.Path]::Combine($OutDir, "makemkv_rip_$(Get-Random).log")
     $args = @('-r','mkv',"disc:$DriveIndex", $Selection, """$OutDir""")
 
+    $cmd = "$MakeMKVPath $($args -join ' ')"
+    Write-Host "  Command: $cmd" -ForegroundColor Gray
+
     $proc = Start-Process -FilePath $MakeMKVPath -ArgumentList $args -NoNewWindow -PassThru -RedirectStandardOutput $logFile -RedirectStandardError $logFile
 
     $lastPercent = -1
