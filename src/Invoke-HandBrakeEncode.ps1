@@ -74,14 +74,17 @@ function Invoke-HandBrake-Encode {
     # Run HandBrakeCLI with progress monitoring
     $cmd = "$HandBrakePath $($args -join ' ')"
     Write-Host "  Command: $cmd" -ForegroundColor Gray
-    $proc = Start-Process -FilePath $HandBrakePath -ArgumentList $args -NoNewWindow -PassThru -RedirectStandardOutput $logFile -RedirectStandardError $logFile
+
+    $outLog = "$logFile.out"
+    $errLog = "$logFile.err"
+    $proc = Start-Process -FilePath $HandBrakePath -ArgumentList $args -NoNewWindow -PassThru -RedirectStandardOutput $outLog -RedirectStandardError $errLog
 
     $lastPercent = -1
     $lastMilestone = -1
     while (-not $proc.HasExited) {
         Start-Sleep -Milliseconds $PollMs
         try {
-            $tail = Get-Content $logFile -Tail 50 -ErrorAction SilentlyContinue
+            $tail = Get-Content $outLog,$errLog -Tail 50 -ErrorAction SilentlyContinue
             foreach ($line in $tail) {
                 # HandBrake JSON progress format: {"State":"WORKING","Working":{"Progress":0.5,"...}}
                 if ($line -match '"Progress"\s*:\s*(\d+(?:\.\d+)?)') {
@@ -114,6 +117,8 @@ function Invoke-HandBrake-Encode {
     $exit = $proc.ExitCode
     # Ensure final log capture
     Start-Sleep -Milliseconds 200
+    # Merge stdout+stderr into canonical log file for callers
+    Get-Content $outLog,$errLog -ErrorAction SilentlyContinue | Out-File $logFile -Encoding utf8
     $all = Get-Content $logFile -ErrorAction SilentlyContinue | Out-String
 
     # Optionally show last lines on failure for quick debugging

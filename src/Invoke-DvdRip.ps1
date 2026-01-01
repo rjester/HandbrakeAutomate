@@ -172,15 +172,17 @@ function Start-MakeMKV-Rip {
 
     $args = @('-r', 'mkv', "disc:$DriveIndex", $Selection, "$OutDir")
     
-    # Run MakeMKV with output redirected to log file
-    $proc = Start-Process -FilePath $MakeMKVPath -ArgumentList $args -NoNewWindow -PassThru -RedirectStandardOutput $log -RedirectStandardError $log
+    # Run MakeMKV with stdout/stderr redirected to separate files to avoid Start-Process limitation
+    $outLog = "$log.out"
+    $errLog = "$log.err"
+    $proc = Start-Process -FilePath $MakeMKVPath -ArgumentList $args -NoNewWindow -PassThru -RedirectStandardOutput $outLog -RedirectStandardError $errLog
 
     $percent = 0
     $lastReportedPercent = -1
     while (-not $proc.HasExited) {
         Start-Sleep -Milliseconds 500
         try {
-            $tail = Get-Content $log -Tail 50 -ErrorAction SilentlyContinue
+            $tail = Get-Content $outLog,$errLog -Tail 50 -ErrorAction SilentlyContinue
             foreach ($line in $tail) {
                 if ($line -match 'PRGV:(\d+),(\d+),(\d+)') {
                     $current = [int]$Matches[1]
@@ -211,6 +213,8 @@ function Start-MakeMKV-Rip {
     Write-Progress -Activity 'MakeMKV Rip' -Completed
 
     $exit = $proc.ExitCode
+    # Merge stdout+stderr into canonical log file for callers
+    Get-Content $outLog,$errLog -ErrorAction SilentlyContinue | Out-File $log -Encoding utf8
 
     return @{ Success = ($exit -eq 0); Log = $log }
 }
@@ -229,14 +233,16 @@ function Start-HandBrake-Encode {
     if ($Format -eq 'mp4') { $args += "-f"; $args += "av_mp4" } else { $args += "-f"; $args += "av_mkv" }
     $args += "--json"
 
-    # Run HandBrakeCLI with progress monitoring - redirect output to log file
-    $proc = Start-Process -FilePath $HandBrakePath -ArgumentList $args -NoNewWindow -PassThru -RedirectStandardOutput $log -RedirectStandardError $log
+    # Run HandBrakeCLI with progress monitoring - redirect stdout/stderr to separate files
+    $outLog = "$log.out"
+    $errLog = "$log.err"
+    $proc = Start-Process -FilePath $HandBrakePath -ArgumentList $args -NoNewWindow -PassThru -RedirectStandardOutput $outLog -RedirectStandardError $errLog
 
     $lastReportedPercent = -1
     while (-not $proc.HasExited) {
         Start-Sleep -Milliseconds 500
         try {
-            $tail = Get-Content $log -Tail 50 -ErrorAction SilentlyContinue
+            $tail = Get-Content $outLog,$errLog -Tail 50 -ErrorAction SilentlyContinue
             foreach ($line in $tail) {
                 # HandBrake JSON progress format: {"State":"WORKING","Working":{"Progress":0.5,"...}}
                 if ($line -match '"Progress"\s*:\s*(\d+(?:\.\d+)?)') {
@@ -264,6 +270,8 @@ function Start-HandBrake-Encode {
     Write-Progress -Activity "Encoding: $(Split-Path $InputFile -Leaf)" -Completed
 
     $exit = $proc.ExitCode
+    # Merge stdout+stderr into canonical log file for callers
+    Get-Content $outLog,$errLog -ErrorAction SilentlyContinue | Out-File $log -Encoding utf8
 
     return @{ Success = ($exit -eq 0); Log = $log }
 }

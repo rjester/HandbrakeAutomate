@@ -101,14 +101,16 @@ function Invoke-MakeMKV-RipTitles {
     $cmd = "$MakeMKVPath $($args -join ' ')"
     Write-Host "  Command: $cmd" -ForegroundColor Gray
 
-    $proc = Start-Process -FilePath $MakeMKVPath -ArgumentList $args -NoNewWindow -PassThru -RedirectStandardOutput $logFile -RedirectStandardError $logFile
+    $outLog = "$logFile.out"
+    $errLog = "$logFile.err"
+    $proc = Start-Process -FilePath $MakeMKVPath -ArgumentList $args -NoNewWindow -PassThru -RedirectStandardOutput $outLog -RedirectStandardError $errLog
 
     $lastPercent = -1
     $lastMilestone = -1
     while (-not $proc.HasExited) {
         Start-Sleep -Milliseconds $PollMs
         try {
-            $tail = Get-Content $logFile -Tail 50 -ErrorAction SilentlyContinue
+            $tail = Get-Content $outLog,$errLog -Tail 50 -ErrorAction SilentlyContinue
             foreach ($line in $tail) {
                 if ($line -match '^PRGV:(\d+),(\d+),(\d+)') {
                     $current = [int]$Matches[1]
@@ -139,6 +141,8 @@ function Invoke-MakeMKV-RipTitles {
     $exit = $proc.ExitCode
     # ensure final log capture
     Start-Sleep -Milliseconds 200
+    # Merge stdout+stderr into canonical log file for callers
+    Get-Content $outLog,$errLog -ErrorAction SilentlyContinue | Out-File $logFile -Encoding utf8
     $all = Get-Content $logFile -ErrorAction SilentlyContinue | Out-String
 
     $mkvFiles = Get-ChildItem -Path $OutDir -Filter '*.mkv' -File -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
