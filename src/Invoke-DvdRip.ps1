@@ -171,52 +171,46 @@ function Start-MakeMKV-Rip {
     Write-Host "  → Starting MakeMKV rip process..." -ForegroundColor Gray
 
     $args = @('-r', 'mkv', "disc:$DriveIndex", $Selection, "$OutDir")
-    $startInfo = New-Object System.Diagnostics.ProcessStartInfo
-    $startInfo.FileName = $MakeMKVPath
-    $startInfo.Arguments = $args -join ' '
-    $startInfo.RedirectStandardOutput = $true
-    $startInfo.RedirectStandardError = $true
-    $startInfo.UseShellExecute = $false
-    $startInfo.CreateNoWindow = $true
-
-    $proc = New-Object System.Diagnostics.Process
-    $proc.StartInfo = $startInfo
-    $proc.Start() | Out-Null
+    
+    # Run MakeMKV with output redirected to log file
+    $proc = Start-Process -FilePath $MakeMKVPath -ArgumentList $args -NoNewWindow -PassThru -RedirectStandardOutput $log -RedirectStandardError $log
 
     $percent = 0
     $lastReportedPercent = -1
     while (-not $proc.HasExited) {
         Start-Sleep -Milliseconds 500
         try {
-            $out = $proc.StandardOutput.ReadToEnd()
-            if ($out -match 'PRGV:(\d+),(\d+),(\d+)') {
-                $current = [int]$Matches[1]
-                $max = [int]$Matches[3]
-                if ($max -ne 0) { $new = [math]::Round(($current / $max) * 100, 1) } else { $new = 0 }
-                if ($new -ne $percent) { 
-                    $percent = $new
-                    Write-Progress -Activity 'MakeMKV Rip' -Status "$percent% complete" -PercentComplete $percent
-                    # Report progress milestones
-                    if ($percent -ge 25 -and $lastReportedPercent -lt 25) {
-                        Write-Host "  → Progress: 25%" -ForegroundColor Gray
-                        $lastReportedPercent = 25
-                    } elseif ($percent -ge 50 -and $lastReportedPercent -lt 50) {
-                        Write-Host "  → Progress: 50%" -ForegroundColor Gray
-                        $lastReportedPercent = 50
-                    } elseif ($percent -ge 75 -and $lastReportedPercent -lt 75) {
-                        Write-Host "  → Progress: 75%" -ForegroundColor Gray
-                        $lastReportedPercent = 75
+            $tail = Get-Content $log -Tail 50 -ErrorAction SilentlyContinue
+            foreach ($line in $tail) {
+                if ($line -match 'PRGV:(\d+),(\d+),(\d+)') {
+                    $current = [int]$Matches[1]
+                    $max = [int]$Matches[3]
+                    if ($max -ne 0) { $new = [math]::Round(($current / $max) * 100, 1) } else { $new = 0 }
+                    if ($new -ne $percent) { 
+                        $percent = $new
+                        Write-Progress -Activity 'MakeMKV Rip' -Status "$percent% complete" -PercentComplete $percent
+                        # Report progress milestones
+                        if ($percent -ge 25 -and $lastReportedPercent -lt 25) {
+                            Write-Host "  → Progress: 25%" -ForegroundColor Gray
+                            $lastReportedPercent = 25
+                        } elseif ($percent -ge 50 -and $lastReportedPercent -lt 50) {
+                            Write-Host "  → Progress: 50%" -ForegroundColor Gray
+                            $lastReportedPercent = 50
+                        } elseif ($percent -ge 75 -and $lastReportedPercent -lt 75) {
+                            Write-Host "  → Progress: 75%" -ForegroundColor Gray
+                            $lastReportedPercent = 75
+                        }
                     }
                 }
             }
-        } catch { }
+        } catch {
+            # Suppress errors during polling (file may be locked or not yet created)
+        }
     }
 
     Write-Progress -Activity 'MakeMKV Rip' -Completed
 
     $exit = $proc.ExitCode
-    $outAll = $proc.StandardOutput.ReadToEnd() + "`n" + $proc.StandardError.ReadToEnd()
-    $outAll | Out-File -FilePath $log -Encoding utf8
 
     return @{ Success = ($exit -eq 0); Log = $log }
 }
@@ -228,54 +222,48 @@ function Start-HandBrake-Encode {
     Write-Host "  → Starting HandBrake encode process..." -ForegroundColor Gray
     
     $args = @()
-    if ($PresetFile -and (Test-Path $PresetFile)) { $args += "--preset-import-file `"$PresetFile`"" }
-    if ($PresetName) { $args += "-Z `"$PresetName`"" }
-    $args += "-i `"$InputFile`""
-    $args += "-o `"$OutputFile`""
-    $args += "-f av_$Format"
+    if ($PresetFile -and (Test-Path $PresetFile)) { $args += "--preset-import-file"; $args += "`"$PresetFile`"" }
+    if ($PresetName) { $args += "-Z"; $args += "`"$PresetName`"" }
+    $args += "-i"; $args += "`"$InputFile`""
+    $args += "-o"; $args += "`"$OutputFile`""
+    if ($Format -eq 'mp4') { $args += "-f"; $args += "av_mp4" } else { $args += "-f"; $args += "av_mkv" }
     $args += "--json"
 
-    $startInfo = New-Object System.Diagnostics.ProcessStartInfo
-    $startInfo.FileName = $HandBrakePath
-    $startInfo.Arguments = $args -join ' '
-    $startInfo.RedirectStandardOutput = $true
-    $startInfo.RedirectStandardError = $true
-    $startInfo.UseShellExecute = $false
-    $startInfo.CreateNoWindow = $true
-
-    $proc = New-Object System.Diagnostics.Process
-    $proc.StartInfo = $startInfo
-    $proc.Start() | Out-Null
+    # Run HandBrakeCLI with progress monitoring - redirect output to log file
+    $proc = Start-Process -FilePath $HandBrakePath -ArgumentList $args -NoNewWindow -PassThru -RedirectStandardOutput $log -RedirectStandardError $log
 
     $lastReportedPercent = -1
     while (-not $proc.HasExited) {
         Start-Sleep -Milliseconds 500
         try {
-            $jsonOut = $proc.StandardError.ReadToEnd() + $proc.StandardOutput.ReadToEnd()
-            if ($jsonOut -match '"Progress"\s*:\s*([0-9.]+)') {
-                $p = [double]$Matches[1]
-                $pct = [math]::Round($p * 100, 1)
-                Write-Progress -Activity "Encoding: $(Split-Path $InputFile -Leaf)" -Status "$pct% complete" -PercentComplete $pct
-                # Report progress milestones
-                if ($pct -ge 25 -and $lastReportedPercent -lt 25) {
-                    Write-Host "  → Encoding progress: 25%" -ForegroundColor Gray
-                    $lastReportedPercent = 25
-                } elseif ($pct -ge 50 -and $lastReportedPercent -lt 50) {
-                    Write-Host "  → Encoding progress: 50%" -ForegroundColor Gray
-                    $lastReportedPercent = 50
-                } elseif ($pct -ge 75 -and $lastReportedPercent -lt 75) {
-                    Write-Host "  → Encoding progress: 75%" -ForegroundColor Gray
-                    $lastReportedPercent = 75
+            $tail = Get-Content $log -Tail 50 -ErrorAction SilentlyContinue
+            foreach ($line in $tail) {
+                # HandBrake JSON progress format: {"State":"WORKING","Working":{"Progress":0.5,"...}}
+                if ($line -match '"Progress"\s*:\s*(\d+(?:\.\d+)?)') {
+                    $p = [double]$Matches[1]
+                    $pct = [math]::Round($p * 100, 1)
+                    Write-Progress -Activity "Encoding: $(Split-Path $InputFile -Leaf)" -Status "$pct% complete" -PercentComplete $pct
+                    # Report progress milestones
+                    if ($pct -ge 25 -and $lastReportedPercent -lt 25) {
+                        Write-Host "  → Encoding progress: 25%" -ForegroundColor Gray
+                        $lastReportedPercent = 25
+                    } elseif ($pct -ge 50 -and $lastReportedPercent -lt 50) {
+                        Write-Host "  → Encoding progress: 50%" -ForegroundColor Gray
+                        $lastReportedPercent = 50
+                    } elseif ($pct -ge 75 -and $lastReportedPercent -lt 75) {
+                        Write-Host "  → Encoding progress: 75%" -ForegroundColor Gray
+                        $lastReportedPercent = 75
+                    }
                 }
             }
-        } catch { }
+        } catch {
+            # Suppress errors during polling (file may be locked or not yet created)
+        }
     }
 
     Write-Progress -Activity "Encoding: $(Split-Path $InputFile -Leaf)" -Completed
 
     $exit = $proc.ExitCode
-    $all = $proc.StandardOutput.ReadToEnd() + "`n" + $proc.StandardError.ReadToEnd()
-    $all | Out-File -FilePath $log -Encoding utf8
 
     return @{ Success = ($exit -eq 0); Log = $log }
 }
