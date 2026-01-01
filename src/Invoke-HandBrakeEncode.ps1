@@ -38,6 +38,12 @@ function Invoke-HandBrake-Encode {
 
     New-Item -ItemType Directory -Path (Split-Path $OutputFile) -Force | Out-Null
 
+    Write-Host "Starting HandBrake encode..." -ForegroundColor Cyan
+    Write-Host "  Input: $(Split-Path $InputFile -Leaf)" -ForegroundColor Gray
+    Write-Host "  Output: $(Split-Path $OutputFile -Leaf)" -ForegroundColor Gray
+    Write-Host "  Container: $Container" -ForegroundColor Gray
+    if ($PresetName) { Write-Host "  Preset: $PresetName" -ForegroundColor Gray }
+
     $logFile = [IO.Path]::Combine((Split-Path $OutputFile), "handbrake_$(Split-Path $InputFile -Leaf)-$(Get-Random).log")
 
     # If a preset file is provided, try importing it and verify the preset name exists
@@ -80,8 +86,10 @@ function Invoke-HandBrake-Encode {
 
     # Optionally show last lines on failure for quick debugging
     if ($exit -ne 0) {
-        Write-Host "HandBrakeCLI exited with code $exit. Last 50 lines of log:" -ForegroundColor Red
+        Write-Host "✗ HandBrakeCLI exited with code $exit. Last 50 lines of log:" -ForegroundColor Red
         Get-Content $logFile -Tail 50 | ForEach-Object { Write-Host $_ }
+    } else {
+        Write-Host "✓ Encoding completed successfully" -ForegroundColor Green
     }
 
     return [PSCustomObject]@{ Success = ($exit -eq 0); ExitCode = $exit; Log = $logFile; Output = $all }
@@ -101,13 +109,26 @@ function Invoke-HandBrake-EncodeBatch {
     if (-not $InputFiles) { throw 'No input files specified' }
     New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
 
+    Write-Host "Starting batch encode of $($InputFiles.Count) file(s)..." -ForegroundColor Cyan
+
     $results = @()
+    $fileNum = 0
     foreach ($in in $InputFiles) {
+        $fileNum++
+        Write-Host ""
+        Write-Host "Processing file $fileNum of $($InputFiles.Count)..." -ForegroundColor Yellow
         $outFile = Join-Path $OutputDir ((Split-Path $in -LeafBase) + "." + $Container)
         $res = Invoke-HandBrake-Encode -InputFile $in -OutputFile $outFile -PresetFile $PresetFile -PresetName $PresetName -Container $Container -HandBrakePath $HandBrakePath -PollMs $PollMs
         $results += [PSCustomObject]@{ Input = $in; Output = $outFile; Success = $res.Success; ExitCode = $res.ExitCode; Log = $res.Log }
-        if (-not $res.Success) { break }
+        if (-not $res.Success) { 
+            Write-Host "✗ Batch encode stopped due to failure" -ForegroundColor Red
+            break 
+        }
     }
+    
+    Write-Host ""
+    Write-Host "Batch encode complete: $($results | Where-Object {$_.Success}).Count of $($InputFiles.Count) files succeeded" -ForegroundColor Cyan
+    
     return $results
 }
 
