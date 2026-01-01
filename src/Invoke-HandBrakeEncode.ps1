@@ -127,7 +127,7 @@ function Invoke-HandBrake-EncodeBatch {
     }
     
     Write-Host ""
-    Write-Host "Batch encode complete: $($results | Where-Object {$_.Success}).Count of $($InputFiles.Count) files succeeded" -ForegroundColor Cyan
+    Write-Host "Batch encode complete: $(@($results | Where-Object {$_.Success}).Count) of $($InputFiles.Count) files succeeded" -ForegroundColor Cyan
     
     return $results
 }

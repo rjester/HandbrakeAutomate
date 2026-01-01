@@ -378,6 +378,7 @@ try {
 
     Write-Host "  → Processing $($mkvFiles.Count) file(s)..." -ForegroundColor Gray
     $encodedCount = 0
+    $successCount = 0
     foreach ($file in $mkvFiles) {
         $encodedCount++
         $outFile = Join-Path $OutputPath ("$($file.BaseName).$OutputFormat")
@@ -390,12 +391,14 @@ try {
             Write-Log 'Keeping temp files for debugging.' -Level WARN
             exit 1
         }
+        $successCount++
         Write-Log "Encoded successfully: $outFile" -Level INFO
         Write-Host "  ✓ Completed: $($file.Name)" -ForegroundColor Green
     }
 
+    # This point is only reached if all files encoded successfully (otherwise we exit above)
     Write-Host ""
-    Write-Host "  ✓ All files encoded successfully" -ForegroundColor Green
+    Write-Host "  ✓ All $successCount file(s) encoded successfully" -ForegroundColor Green
     Write-Host ""
     Write-Progress -Activity "DVD Rip Workflow" -Status "Complete" -PercentComplete 100
 
