@@ -82,7 +82,7 @@ function Invoke-HandBrake-Encode {
             $tail = Get-Content $logFile -Tail 50 -ErrorAction SilentlyContinue
             foreach ($line in $tail) {
                 # HandBrake JSON progress format: {"State":"WORKING","Working":{"Progress":0.5,"...}}
-                if ($line -match '"Progress"\s*:\s*([\d.]+)') {
+                if ($line -match '"Progress"\s*:\s*(\d+(?:\.\d+)?)') {
                     $progress = [double]$Matches[1]
                     $pct = [math]::Round($progress * 100, 1)
                     if ($pct -ne $lastPercent) {
@@ -102,7 +102,9 @@ function Invoke-HandBrake-Encode {
                     }
                 }
             }
-        } catch { }
+        } catch {
+            # Suppress errors during polling (file may be locked or not yet created)
+        }
     }
 
     Write-Progress -Activity 'HandBrake Encode' -Completed
