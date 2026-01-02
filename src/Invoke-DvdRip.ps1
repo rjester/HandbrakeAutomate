@@ -153,7 +153,8 @@ function Prompt-SelectTitles {
         if (-not $parts) { Write-Host "Invalid selection" -ForegroundColor Yellow; continue }
         $valid = $true
         foreach ($p in $parts) {
-            if (-not ($p -as [int])) { $valid = $false; break }
+            $tmp = 0
+            if (-not [int]::TryParse($p,[ref]$tmp)) { $valid = $false; break }
             $exists = $false
             if ($Titles | Where-Object { $_.Index -eq [int]$p }) { $exists = $true }
             if (-not $exists) { $valid = $false; break }
