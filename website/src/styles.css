@@ -76,7 +76,7 @@ main {
 }
 
 .container {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto 2rem auto;
   padding: 3rem;
   background: var(--card-bg);
@@ -97,7 +97,7 @@ main {
 
 .lead {
   font-size: 1.25rem;
-  max-width: 700px;
+  max-width: 800px;
   margin: 0 auto 2.5rem auto;
   color: var(--text-muted);
 }
@@ -107,7 +107,7 @@ main {
   border-radius: 12px;
   border: 1px solid var(--border);
   overflow: hidden;
-  max-width: 800px;
+  width: 100%;
   margin: 0 auto;
   text-align: left;
 }
@@ -216,6 +216,27 @@ main {
 
 .info-links {
   margin-top: 2rem;
+}
+
+.cmd {
+  background: var(--code-bg);
+  padding: 1.25rem;
+  border-radius: 10px;
+  color: var(--accent-light);
+  border: 1px solid var(--border);
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.9rem;
+  overflow-x: auto;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+  margin: 1rem 0 2rem 0;
+}
+
+.quick-start-box .cmd {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .table-wrapper {
