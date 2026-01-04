@@ -1,0 +1,18 @@
+:root{
+  --bg:#0f1724;
+  --card:#0b1220;
+  --accent:#3b82f6;
+  --muted:#9ca3af;
+  --text:#e6eef8;
+}
+body{background:linear-gradient(180deg,var(--bg),#081024);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0}
+.app{min-height:100vh;display:flex;flex-direction:column}
+.site-header{padding:2rem;background:rgba(255,255,255,0.02);border-bottom:1px solid rgba(255,255,255,0.03)}
+.site-header h1{margin:0;font-size:1.6rem}
+.tagline{color:var(--muted);margin-top:0.25rem}
+.container{max-width:900px;margin:2rem auto;padding:1.25rem;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border-radius:8px}
+.cmd{background:#071028;padding:0.75rem;border-radius:6px;color:#bfe0ff}
+.args{width:100%;border-collapse:collapse;margin-top:0.5rem}
+.args th{font-weight:600;text-align:left;padding:0.5rem 0;color:var(--muted)}
+.args td{padding:0.5rem 0;border-top:1px solid rgba(255,255,255,0.02)}
+.site-footer{margin-top:auto;padding:1rem;text-align:center;color:var(--muted);font-size:0.9rem}
