@@ -1,3 +1,37 @@
+# Node/Vite
 node_modules/
 dist/
+.vite/
+
+# Environment files
 .env
+.env.*.local
+.env.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+
+# IDEs / editors
+.vscode/
+.idea/
+
+# TypeScript
+tsconfig.tsbuildinfo
+
+# Build caches
+.cache/
+.parcel-cache/
+
+# Testing / coverage
+coverage/
+
+# Misc
+.eslintcache
+*.tgz
+
