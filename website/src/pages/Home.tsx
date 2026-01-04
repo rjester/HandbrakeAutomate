@@ -1,4 +1,5 @@
 import React from 'react'
+import { Disc, Settings, Trash2, ExternalLink, BookOpen } from 'lucide-react'
 
 const args = [
   ['PresetFile', 'string', `Default: %USERPROFILE%\\AppData\\Roaming\\HandBrake\\presets.json`],
@@ -32,19 +33,19 @@ export default function Home(): JSX.Element {
         </div>
       </section>
 
-      <section className="container features-grid">
+      <section id="features" className="container features-grid">
         <div className="feature-card">
-          <div className="feature-icon">🔍</div>
+          <div className="feature-icon"><Disc size={36} /></div>
           <h3>Auto-Detection</h3>
           <p>Intelligently finds MakeMKV and HandBrake on your system, or accepts custom paths for portable setups.</p>
         </div>
         <div className="feature-card">
-          <div className="feature-icon">⚙️</div>
+          <div className="feature-icon"><Settings size={36} /></div>
           <h3>Preset Support</h3>
           <p>Full support for HandBrake JSON presets, allowing you to maintain consistent quality across your entire collection.</p>
         </div>
         <div className="feature-card">
-          <div className="feature-icon">🧹</div>
+          <div className="feature-icon"><Trash2 size={36} /></div>
           <h3>Smart Cleanup</h3>
           <p>Automatically manages temporary files, with options to keep them for manual inspection when needed.</p>
         </div>
@@ -78,8 +79,8 @@ export default function Home(): JSX.Element {
           The script will guide you through title selection and handle the rest.
         </p>
         <div className="info-links">
-          <a href="https://github.com/yourusername/AutomateHandbrake" className="btn btn-primary">View on GitHub</a>
-          <a href="#docs" className="btn btn-secondary">Read Documentation</a>
+          <a href="https://github.com/yourusername/AutomateHandbrake" className="btn btn-primary"><ExternalLink size={16} style={{marginRight:8}}/>View on GitHub</a>
+          <a href="#docs" className="btn btn-secondary"><BookOpen size={14} style={{marginRight:8}}/>Read Documentation</a>
         </div>
       </section>
     </div>
