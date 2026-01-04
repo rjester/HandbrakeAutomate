@@ -88,10 +88,6 @@ main {
   text-align: left;
   padding: 3.5rem 1rem;
   background: transparent;
-  display: grid;
-  grid-template-columns: 1fr 420px;
-  align-items: center;
-  gap: 2.5rem;
 }
 
 .lead {
@@ -113,19 +109,7 @@ main {
   flex-direction: column;
 }
 
-.hero-visual img {
-  width: 100%;
-  height: auto;
-  display: block;
-  border-radius: 12px;
-  box-shadow: var(--shadow-soft);
-}
-
-.hero-visual {
-  display: block;
-  justify-self: center;
-  max-width: 420px;
-}
+/* hero visual removed */
 
 .box-header {
   padding: 0.75rem 1rem;

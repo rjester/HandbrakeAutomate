@@ -19,11 +19,11 @@ export default function Home(): JSX.Element {
       <section className="container hero-section">
         <h2>Streamline Your Media Library</h2>
         <p className="lead">
-          AutomateHandbrake provides a powerful, scriptable interface for converting your physical media 
-          into high-quality digital files. Built on top of industry-standard tools like MakeMKV 
+          AutomateHandbrake provides a powerful, scriptable interface for converting your physical media
+          into high-quality digital files. Built on top of industry-standard tools like MakeMKV
           and HandBrake CLI.
         </p>
-        
+
         <div className="quick-start-box">
           <div className="box-header">
             <span className="terminal-dots"></span>
