@@ -1,7 +1,29 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Home from './pages/Home'
+import { Sun, Moon } from 'lucide-react'
 
 export default function App(): JSX.Element {
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem('theme')
+      if (stored) return stored === 'dark'
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+    } catch {
+      return false
+    }
+  })
+
+  useEffect(() => {
+    const root = document.documentElement
+    if (isDark) {
+      root.classList.add('theme-dark')
+      localStorage.setItem('theme', 'dark')
+    } else {
+      root.classList.remove('theme-dark')
+      localStorage.setItem('theme', 'light')
+    }
+  }, [isDark])
+
   return (
     <div className="app">
       <nav className="main-nav">
@@ -11,6 +33,14 @@ export default function App(): JSX.Element {
             <a href="#features">Features</a>
             <a href="#docs">Docs</a>
             <a href="https://github.com/yourusername/AutomateHandbrake">GitHub</a>
+            <button
+              aria-label="Toggle theme"
+              className="theme-toggle"
+              onClick={() => setIsDark((s) => !s)}
+              title={isDark ? 'Switch to light' : 'Switch to dark'}
+            >
+              {isDark ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
           </div>
         </div>
       </nav>

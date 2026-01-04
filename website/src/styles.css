@@ -13,6 +13,21 @@
   --shadow-strong: 0 18px 50px rgba(12, 24, 35, 0.08);
 }
 
+/* Dark theme overrides */
+.theme-dark {
+  --bg: #07101a;
+  --surface: #0b1720;
+  --muted-surface: rgba(255,255,255,0.02);
+  --accent: #7c5cff;
+  --accent-2: #6cd4b6;
+  --text: #e6eef8;
+  --muted: #9fb0c1;
+  --border: rgba(255,255,255,0.04);
+  --code-bg: rgba(255,255,255,0.02);
+  --shadow-soft: 0 10px 30px rgba(2,6,23,0.6);
+  --shadow-strong: 0 18px 40px rgba(2,6,23,0.7);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -70,15 +85,19 @@ main {
 }
 
 .hero-section {
-  text-align: center;
+  text-align: left;
   padding: 3.5rem 1rem;
   background: transparent;
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  align-items: center;
+  gap: 2.5rem;
 }
 
 .lead {
   font-size: 1.125rem;
-  max-width: 780px;
-  margin: 0 auto 1.75rem auto;
+  max-width: 680px;
+  margin: 0 0 1.75rem 0;
   color: var(--muted);
 }
 
@@ -92,6 +111,20 @@ main {
   text-align: left;
   display: flex;
   flex-direction: column;
+}
+
+.hero-visual img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+  box-shadow: var(--shadow-soft);
+}
+
+.hero-visual {
+  display: block;
+  justify-self: center;
+  max-width: 420px;
 }
 
 .box-header {
@@ -287,22 +320,37 @@ main {
   color: var(--text-muted);
 }
 
+.theme-toggle{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:36px;
+  height:36px;
+  margin-left:0.6rem;
+  border-radius:8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.theme-toggle:hover{ transform: translateY(-2px); }
+
 @media (max-width: 768px) {
   .site-header h1 {
     font-size: 2rem;
   }
   
   .container {
-    padding: 2rem 1.5rem;
+    padding: 1.5rem;
     border-radius: 12px;
   }
   
   h2 {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
   }
   
   h3 {
-    font-size: 1.25rem;
+    font-size: 1.15rem;
   }
   
   .args {
@@ -311,6 +359,12 @@ main {
   
   .args th,
   .args td {
-    padding: 0.75rem;
+    padding: 0.6rem;
   }
+
+  .hero-section {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  .hero-visual { display: none; }
 }
