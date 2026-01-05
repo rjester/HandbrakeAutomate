@@ -96,23 +96,32 @@ function Invoke-MakeMKV-RipTitles {
     Write-Host "  Output: $OutDir" -ForegroundColor Gray
 
     $logFile = [IO.Path]::Combine($OutDir, "makemkv_rip_$(Get-Random).log")
-    $args = @('-r','mkv',"disc:$DriveIndex", $Selection, """$OutDir""")
+    
+    # Split comma-separated selection into individual title numbers
+    $titleNumbers = $Selection -split ',' | ForEach-Object { $_.Trim() }
+    
+    # MakeMKV can only rip one title at a time, so we need to call it once for each title
+    $overallSuccess = $true
+    foreach ($titleNum in $titleNumbers) {
+        Write-Host "  → Ripping title $titleNum..." -ForegroundColor Gray
+        
+        $makemkvArgs = @('-r','mkv',"disc:$DriveIndex", $titleNum, """$OutDir""")
 
-    $cmd = "$MakeMKVPath $($args -join ' ')"
-    Write-Host "  Command: $cmd" -ForegroundColor Gray
+        $cmd = "$MakeMKVPath $($makemkvArgs -join ' ')"
+        Write-Host "  Command: $cmd" -ForegroundColor Gray
 
-    $outLog = "$logFile.out"
-    $errLog = "$logFile.err"
-    $proc = Start-Process -FilePath $MakeMKVPath -ArgumentList $args -NoNewWindow -PassThru -RedirectStandardOutput $outLog -RedirectStandardError $errLog
+        $outLog = "$logFile.out"
+        $errLog = "$logFile.err"
+        $proc = Start-Process -FilePath $MakeMKVPath -ArgumentList $makemkvArgs -NoNewWindow -PassThru -RedirectStandardOutput $outLog -RedirectStandardError $errLog
 
-    $lastPercent = -1
-    $lastMilestone = -1
-    while (-not $proc.HasExited) {
-        Start-Sleep -Milliseconds $PollMs
-        try {
-            $tail = Get-Content $outLog,$errLog -Tail 50 -ErrorAction SilentlyContinue
-            foreach ($line in $tail) {
-                if ($line -match '^PRGV:(\d+),(\d+),(\d+)') {
+        $lastPercent = -1
+        $lastMilestone = -1
+        while (-not $proc.HasExited) {
+            Start-Sleep -Milliseconds $PollMs
+            try {
+                $tail = Get-Content $outLog,$errLog -Tail 50 -ErrorAction SilentlyContinue
+                foreach ($line in $tail) {
+                    if ($line -match '^PRGV:(\d+),(\d+),(\d+)') {
                     $current = [int]$Matches[1]
                     $max = [int]$Matches[3]
                     if ($max -gt 0) { $pct = [math]::Round(($current / $max) * 100,1) } else { $pct = 0 }
@@ -136,25 +145,33 @@ function Invoke-MakeMKV-RipTitles {
         } catch { }
     }
 
-    Write-Progress -Activity 'MakeMKV Rip' -Completed
+    Write-Progress -Activity "Ripping title $titleNum" -Completed
 
     $exit = $proc.ExitCode
-    # ensure final log capture
-    Start-Sleep -Milliseconds 200
-    # Merge stdout+stderr into canonical log file for callers
-    Get-Content $outLog,$errLog -ErrorAction SilentlyContinue | Out-File $logFile -Encoding utf8
-    $all = Get-Content $logFile -ErrorAction SilentlyContinue | Out-String
-
-    $mkvFiles = Get-ChildItem -Path $OutDir -Filter '*.mkv' -File -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
-
-    if ($exit -eq 0) {
-        Write-Host "✓ MakeMKV rip completed successfully" -ForegroundColor Green
-        Write-Host "  Files created: $($mkvFiles.Count)" -ForegroundColor Gray
-    } else {
-        Write-Host "✗ MakeMKV rip failed with exit code $exit" -ForegroundColor Red
+    if ($exit -ne 0) {
+        Write-Host "MakeMKV failed for title $titleNum with exit code $exit" -ForegroundColor Red
+        $overallSuccess = $false
     }
+}
 
-    return [PSCustomObject]@{ Success = ($exit -eq 0); ExitCode = $exit; Log = $logFile; Files = $mkvFiles; RawOutput = $all }
+Write-Progress -Activity 'MakeMKV Rip' -Completed
+
+# ensure final log capture
+Start-Sleep -Milliseconds 200
+# Merge stdout+stderr into canonical log file for callers
+Get-Content $outLog,$errLog -ErrorAction SilentlyContinue | Out-File $logFile -Encoding utf8
+$all = Get-Content $logFile -ErrorAction SilentlyContinue | Out-String
+
+$mkvFiles = Get-ChildItem -Path $OutDir -Filter '*.mkv' -File -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
+
+if ($overallSuccess) {
+    Write-Host "✓ MakeMKV rip completed successfully" -ForegroundColor Green
+    Write-Host "  Files created: $($mkvFiles.Count)" -ForegroundColor Gray
+} else {
+    Write-Host "✗ MakeMKV rip failed for one or more titles" -ForegroundColor Red
+}
+
+return [PSCustomObject]@{ Success = $overallSuccess; ExitCode = 0; Log = $logFile; Files = $mkvFiles; RawOutput = $all }
 }
 
 # Intentionally not exporting module members to allow dot-sourcing this script.

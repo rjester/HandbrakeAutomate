@@ -171,53 +171,75 @@ function Start-MakeMKV-Rip {
 
     Write-Host "  → Starting MakeMKV rip process..." -ForegroundColor Gray
 
-    $args = @('-r', 'mkv', "disc:$DriveIndex", $Selection, "$OutDir")
-    
-    # Run MakeMKV with stdout/stderr redirected to separate files to avoid Start-Process limitation
-    $outLog = "$log.out"
-    $errLog = "$log.err"
-    $proc = Start-Process -FilePath $MakeMKVPath -ArgumentList $args -NoNewWindow -PassThru -RedirectStandardOutput $outLog -RedirectStandardError $errLog
+    # Build arguments array, splitting selection into individual title numbers
+    $makemkvArgs = @('-r', 'mkv', "disc:$DriveIndex")
+    if ($Selection -eq 'all') {
+        # For 'all', we need to get all available titles and add them individually
+        # This is a limitation - MakeMKV doesn't have a direct 'all' option
+        # For now, we'll let it fail and suggest selecting specific titles
+        Write-Log "Selection 'all' not supported - please select specific title numbers" -Level ERROR
+        return @{Success=$false; Log=$log}
+    } else {
+        # Split comma-separated selection into individual title numbers
+        $titleNumbers = $Selection -split ',' | ForEach-Object { $_.Trim() }
+        
+        # MakeMKV can only rip one title at a time, so we need to call it once for each title
+        $overallSuccess = $true
+        foreach ($titleNum in $titleNumbers) {
+            Write-Host "  → Ripping title $titleNum..." -ForegroundColor Gray
+            
+            $singleTitleArgs = @('-r', 'mkv', "disc:$DriveIndex", $titleNum, "$OutDir")
+            
+            # Run MakeMKV with stdout/stderr redirected to separate files
+            $outLog = "$log.out"
+            $errLog = "$log.err"
+            $proc = Start-Process -FilePath $MakeMKVPath -ArgumentList $singleTitleArgs -NoNewWindow -PassThru -RedirectStandardOutput $outLog -RedirectStandardError $errLog
 
-    $percent = 0
-    $lastReportedPercent = -1
-    while (-not $proc.HasExited) {
-        Start-Sleep -Milliseconds 500
-        try {
-            $tail = Get-Content $outLog,$errLog -Tail 50 -ErrorAction SilentlyContinue
-            foreach ($line in $tail) {
-                if ($line -match 'PRGV:(\d+),(\d+),(\d+)') {
-                    $current = [int]$Matches[1]
-                    $max = [int]$Matches[3]
-                    if ($max -ne 0) { $new = [math]::Round(($current / $max) * 100, 1) } else { $new = 0 }
-                    if ($new -ne $percent) { 
-                        $percent = $new
-                        Write-Progress -Activity 'MakeMKV Rip' -Status "$percent% complete" -PercentComplete $percent
-                        # Report progress milestones
-                        if ($percent -ge 25 -and $lastReportedPercent -lt 25) {
-                            Write-Host "  → Progress: 25%" -ForegroundColor Gray
-                            $lastReportedPercent = 25
-                        } elseif ($percent -ge 50 -and $lastReportedPercent -lt 50) {
-                            Write-Host "  → Progress: 50%" -ForegroundColor Gray
-                            $lastReportedPercent = 50
-                        } elseif ($percent -ge 75 -and $lastReportedPercent -lt 75) {
-                            Write-Host "  → Progress: 75%" -ForegroundColor Gray
-                            $lastReportedPercent = 75
+            $percent = 0
+            $lastReportedPercent = -1
+            while (-not $proc.HasExited) {
+                Start-Sleep -Milliseconds 500
+                try {
+                    $tail = Get-Content $outLog,$errLog -Tail 50 -ErrorAction SilentlyContinue
+                    foreach ($line in $tail) {
+                        if ($line -match 'PRGV:(\d+),(\d+),(\d+)') {
+                            $current = [int]$Matches[1]
+                            $max = [int]$Matches[3]
+                            if ($max -gt 0) {
+                                $percent = [int](($current / $max) * 100)
+                                if ($percent -ne $lastReportedPercent) {
+                                    Write-Progress -Activity "Ripping title $titleNum" -Status "$percent% complete" -PercentComplete $percent
+                                    $lastReportedPercent = $percent
+                                }
+                            }
                         }
                     }
+                } catch {
+                    # Ignore errors reading log files
                 }
             }
-        } catch {
-            # Suppress errors during polling (file may be locked or not yet created)
+            
+            $proc.WaitForExit()
+            if ($proc.ExitCode -ne 0) {
+                Write-Log "MakeMKV failed for title $titleNum with exit code $($proc.ExitCode)" -Level ERROR
+                $overallSuccess = $false
+            }
         }
+        
+        Write-Progress -Activity "Ripping titles" -Completed
+        
+        # Combine all output/error logs into the main log file
+        try {
+            $combinedLog = @()
+            if (Test-Path $outLog) { $combinedLog += Get-Content $outLog }
+            if (Test-Path $errLog) { $combinedLog += Get-Content $errLog }
+            $combinedLog | Out-File -FilePath $log -Encoding UTF8
+        } catch {
+            Write-Log "Failed to combine log files: $_" -Level WARN
+        }
+        
+        return @{Success=$overallSuccess; Log=$log}
     }
-
-    Write-Progress -Activity 'MakeMKV Rip' -Completed
-
-    $exit = $proc.ExitCode
-    # Merge stdout+stderr into canonical log file for callers
-    Get-Content $outLog,$errLog -ErrorAction SilentlyContinue | Out-File $log -Encoding utf8
-
-    return @{ Success = ($exit -eq 0); Log = $log }
 }
 
 function Start-HandBrake-Encode {
@@ -226,18 +248,18 @@ function Start-HandBrake-Encode {
     
     Write-Host "  → Starting HandBrake encode process..." -ForegroundColor Gray
     
-    $args = @()
-    if ($PresetFile -and (Test-Path $PresetFile)) { $args += "--preset-import-file"; $args += "`"$PresetFile`"" }
-    if ($PresetName) { $args += "-Z"; $args += "`"$PresetName`"" }
-    $args += "-i"; $args += "`"$InputFile`""
-    $args += "-o"; $args += "`"$OutputFile`""
-    if ($Format -eq 'mp4') { $args += "-f"; $args += "av_mp4" } else { $args += "-f"; $args += "av_mkv" }
-    $args += "--json"
+    $handbrakeArgs = @()
+    if ($PresetFile -and (Test-Path $PresetFile)) { $handbrakeArgs += "--preset-import-file"; $handbrakeArgs += "`"$PresetFile`"" }
+    if ($PresetName) { $handbrakeArgs += "-Z"; $handbrakeArgs += "`"$PresetName`"" }
+    $handbrakeArgs += "-i"; $handbrakeArgs += "`"$InputFile`""
+    $handbrakeArgs += "-o"; $handbrakeArgs += "`"$OutputFile`""
+    if ($Format -eq 'mp4') { $handbrakeArgs += "-f"; $handbrakeArgs += "av_mp4" } else { $handbrakeArgs += "-f"; $handbrakeArgs += "av_mkv" }
+    $handbrakeArgs += "--json"
 
     # Run HandBrakeCLI with progress monitoring - redirect stdout/stderr to separate files
     $outLog = "$log.out"
     $errLog = "$log.err"
-    $proc = Start-Process -FilePath $HandBrakePath -ArgumentList $args -NoNewWindow -PassThru -RedirectStandardOutput $outLog -RedirectStandardError $errLog
+    $proc = Start-Process -FilePath $HandBrakePath -ArgumentList $handbrakeArgs -NoNewWindow -PassThru -RedirectStandardOutput $outLog -RedirectStandardError $errLog
 
     $lastReportedPercent = -1
     while (-not $proc.HasExited) {
@@ -354,6 +376,13 @@ try {
     Write-Host "  → Output directory: $TempPath" -ForegroundColor Gray
     Write-Progress -Activity "DVD Rip Workflow" -Status "Ripping titles..." -PercentComplete 60
     Write-Log "Ripping selected titles to temp: $TempPath" -Level INFO
+
+    # Convert 'all' selection to comma-separated list of all title indices
+    if ($selection -eq 'all') {
+        $selection = ($titles | ForEach-Object { $_.Index }) -join ','
+        Write-Log "Converted 'all' to title indices: $selection" -Level INFO
+    }
+
     $ripRes = Start-MakeMKV-Rip -MakeMKVPath $makeMKV -DriveIndex $drive.Index -Selection $selection -OutDir $TempPath
     if (-not $ripRes.Success) {
         Write-Log "MakeMKV rip failed. See log: $($ripRes.Log)" -Level ERROR

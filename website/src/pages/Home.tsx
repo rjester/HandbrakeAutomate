@@ -19,7 +19,7 @@ export default function Home(): JSX.Element {
       <section className="container hero-section">
         <h2>Streamline Your Media Library</h2>
         <p className="lead">
-          AutomateHandbrake provides a powerful, scriptable interface for converting your physical media
+          Handbrake Automate provides a powerful, scriptable interface for converting your physical media
           into high-quality digital files. Built on top of industry-standard tools like MakeMKV
           and HandBrake CLI.
         </p>
@@ -29,7 +29,11 @@ export default function Home(): JSX.Element {
             <span className="terminal-dots"></span>
             <span className="box-title">Quick Start</span>
           </div>
-          <pre className="cmd">pwsh ./src/Invoke-DvdRip.ps1 -OutputPath C:\\Videos -PresetFile ./src/presets/DvdRip.json -PresetName "DvdRip Balanced" -OutputFormat mp4</pre>
+          <pre className="cmd">pwsh ./src/Invoke-DvdRip.ps1 \<br/>
+  -OutputPath C:\\Videos \<br/>
+  -PresetFile ./src/presets/DvdRip.json \<br/>
+  -PresetName "DvdRip Balanced" \<br/>
+  -OutputFormat mp4</pre>
         </div>
       </section>
 
@@ -79,7 +83,7 @@ export default function Home(): JSX.Element {
           The script will guide you through title selection and handle the rest.
         </p>
         <div className="info-links">
-          <a href="https://github.com/yourusername/AutomateHandbrake" className="btn btn-primary"><ExternalLink size={16} style={{marginRight:8}}/>View on GitHub</a>
+          <a href="https://github.com/rjester/HandbrakeAutomate" className="btn btn-primary"><ExternalLink size={16} style={{marginRight:8}}/>View on GitHub</a>
           <a href="#docs" className="btn btn-secondary"><BookOpen size={14} style={{marginRight:8}}/>Read Documentation</a>
         </div>
       </section>

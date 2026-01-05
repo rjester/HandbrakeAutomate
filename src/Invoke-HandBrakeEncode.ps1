@@ -63,21 +63,21 @@ function Invoke-HandBrake-Encode {
         }
     }
 
-    $args = @()
-    if ($PresetFile -and (Test-Path $PresetFile)) { $args += "--preset-import-file"; $args += "`"$PresetFile`"" }
-    if ($PresetName) { $args += "-Z"; $args += "`"$PresetName`"" }
-    $args += "-i"; $args += "`"$InputFile`""
-    $args += "-o"; $args += "`"$OutputFile`""
-    if ($Container -eq 'mp4') { $args += "-f"; $args += "av_mp4" } else { $args += "-f"; $args += "av_mkv" }
-    $args += "--json"
+$handbrakeArgs = @()
+    if ($PresetFile -and (Test-Path $PresetFile)) { $handbrakeArgs += "--preset-import-file"; $handbrakeArgs += "`"$PresetFile`"" }
+    if ($PresetName) { $handbrakeArgs += "-Z"; $handbrakeArgs += "`"$PresetName`"" }
+    $handbrakeArgs += "-i"; $handbrakeArgs += "`"$InputFile`"" 
+    $handbrakeArgs += "-o"; $handbrakeArgs += "`"$OutputFile`""
+    if ($Container -eq 'mp4') { $handbrakeArgs += "-f"; $handbrakeArgs += "av_mp4" } else { $handbrakeArgs += "-f"; $handbrakeArgs += "av_mkv" }
+    $handbrakeArgs += "--json"
 
     # Run HandBrakeCLI with progress monitoring
-    $cmd = "$HandBrakePath $($args -join ' ')"
+    $cmd = "$HandBrakePath $($handbrakeArgs -join ' ')"
     Write-Host "  Command: $cmd" -ForegroundColor Gray
 
     $outLog = "$logFile.out"
     $errLog = "$logFile.err"
-    $proc = Start-Process -FilePath $HandBrakePath -ArgumentList $args -NoNewWindow -PassThru -RedirectStandardOutput $outLog -RedirectStandardError $errLog
+    $proc = Start-Process -FilePath $HandBrakePath -ArgumentList $handbrakeArgs -NoNewWindow -PassThru -RedirectStandardOutput $outLog -RedirectStandardError $errLog
 
     $lastPercent = -1
     $lastMilestone = -1

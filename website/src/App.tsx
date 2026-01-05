@@ -28,11 +28,11 @@ export default function App(): JSX.Element {
     <div className="app">
       <nav className="main-nav">
         <div className="nav-container">
-          <div className="nav-logo">AutomateHandbrake</div>
+          <div className="nav-logo">Handbrake Automate</div>
           <div className="nav-links">
             <a href="#features">Features</a>
             <a href="#docs">Docs</a>
-            <a href="https://github.com/yourusername/AutomateHandbrake">GitHub</a>
+            <a href="https://github.com/rjester/HandbrakeAutomate">GitHub</a>
             <button
               aria-label="Toggle theme"
               className="theme-toggle"
@@ -45,7 +45,7 @@ export default function App(): JSX.Element {
         </div>
       </nav>
       <header className="site-header">
-        <h1>AutomateHandbrake</h1>
+        <h1>Handbrake Automate</h1>
         <p className="tagline">The ultimate PowerShell companion for your physical media collection.</p>
       </header>
       <main>
@@ -53,7 +53,7 @@ export default function App(): JSX.Element {
       </main>
       <footer className="site-footer">
         <div className="footer-content">
-          <p>© 2026 AutomateHandbrake. Built with React & Vite.</p>
+          <p>© 2026 Handbrake Automate. Built with React & Vite.</p>
           <div className="footer-links">
             <a href="#">Privacy</a>
             <a href="#">Terms</a>

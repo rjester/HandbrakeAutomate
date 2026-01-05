@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <linearGradient id="discGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7C5CFF" stop-opacity="0.8" />
+      <stop offset="1" stop-color="#6CD4B6" stop-opacity="0.8" />
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#7C5CFF" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="200" cy="150" r="120" fill="url(#discGrad)" opacity="0.1" filter="url(#glow)" />
+
+  <!-- DVD disc -->
+  <circle cx="200" cy="150" r="80" fill="white" opacity="0.9" />
+  <circle cx="200" cy="150" r="60" fill="url(#discGrad)" />
+  <circle cx="200" cy="150" r="20" fill="white" opacity="0.95" />
+
+  <!-- Arrow indicating flow -->
+  <path d="M120 150 L160 150 L155 145 M160 150 L155 155" stroke="#7C5CFF" stroke-width="3" stroke-linecap="round" fill="none" />
+
+  <!-- Text labels -->
+  <text x="200" y="220" text-anchor="middle" fill="#475569" font-family="Inter, sans-serif" font-size="14" font-weight="500">MakeMKV → HandBrake</text>
+</svg>
